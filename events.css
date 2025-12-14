@@ -38,7 +38,7 @@
 
 /* Date */
 .date p {
-  font-size: 18px;
+  font-size: 20px;
   color: var(--events-text-color);
   margin: 0;
   line-height: 1.2;
@@ -54,11 +54,12 @@
   text-transform: uppercase;
   font-family: var(--headlinefont);
   font-weight: 900;
+  font-size: 26px;
   margin: 0;
 }
 
 .details p {
-  font-size: 20px;
+  font-size: 22px;
   margin: 0;
   color: var(--events-text-color);
   line-height: 1.4;
@@ -83,7 +84,7 @@
   background: #000;
   color: #fff;
   padding: 10px 16px;
-  font-size: 18px;
+  font-size: 20px;
   font-family: var(--headlinefont);
   font-weight: 800;
   border-radius: 1000px;
@@ -112,7 +113,7 @@
 /* remove forced text color */
 .showtime-date p {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
   color: var(--events-text-color);
 }
 
