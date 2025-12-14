@@ -1,0 +1,30 @@
+/* =========================================================================
+   LOCATION-AWARE BANNER — Styling (Final)
+   ========================================================================= */
+
+.location-banner-container {
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: #fff;
+  text-transform: uppercase;
+  line-height: 1.4;
+  padding: 12px 15px;
+}
+
+.location-banner-container a {
+  color: #fff;
+  text-decoration: underline;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 767px) {
+  .location-banner-container {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+}

@@ -1,0 +1,276 @@
+/* =========================================================================
+   EVENTS WIDGET — Layout, Styling & Waitlist Bottom Sheet
+   ========================================================================= */
+
+/* ---------- Root Variables ---------- */
+:root {
+  --events-text-color: #605858; /* default fallback */
+}
+
+/* ---------- Root Container ---------- */
+.event-container,
+.AllShows,
+#all-events {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.event-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  padding: 0.8rem;
+  margin-bottom: 10px;
+  gap: 1rem;
+  border-bottom: 1px dashed #000;
+}
+
+/* left column */
+.event-info-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 2;
+  font-family: var(--contentfont);
+}
+
+/* Date */
+.date p {
+  font-size: 18px;
+  color: var(--events-text-color);
+  margin: 0;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Details */
+.details h3 {
+  color: var(--events-text-color);
+
+  text-transform: uppercase;
+  font-family: var(--headlinefont);
+  font-weight: 900;
+  margin: 0;
+}
+
+.details p {
+  font-size: 20px;
+  margin: 0;
+  color: var(--events-text-color);
+  line-height: 1.4;
+}
+
+.details .event-title {
+  font-style: italic;
+}
+
+/* Ticket column */
+.tickets-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 250px;
+}
+
+/* Ticket button */
+.tickets-info {
+  background: #000;
+  color: #fff;
+  padding: 10px 16px;
+  font-size: 18px;
+  font-family: var(--headlinefont);
+  font-weight: 800;
+  border-radius: 1000px;
+  text-transform: uppercase;
+  text-decoration: none;
+  margin-bottom: 5px;
+  display: inline-block;
+  text-align: center;
+  transition: 0.2s ease;
+  cursor: pointer;
+}
+
+.tickets-info:hover {
+  background: #000;
+  color: gold;
+}
+
+/* Showtime row */
+.showtime-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 6px;
+}
+
+/* remove forced text color */
+.showtime-date p {
+  margin: 0;
+  font-size: 18px;
+  color: var(--events-text-color);
+}
+
+.TicketP {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* NEAR YOU badge */
+.badge-near-you {
+  display: inline-block;
+  background: yellow;
+  color: #000;
+  font-weight: bold;
+  font-size: 14px;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-left: 8px;
+}
+
+/* =========================================================================
+   WAITLIST BOTTOM SHEET
+   ========================================================================= */
+
+#waitlistOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+#waitlistOverlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+#waitlistBottomSheet {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  width: 100%;
+  max-width: 720px;
+  background: #05090c;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  height: 65vh;
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure desktop active state slides up from bottom */
+#waitlistBottomSheet.active {
+  transform: translateX(-50%) translateY(0);
+}
+
+.waitlist-bottom-sheet-header {
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  touch-action: none;
+  cursor: grab;
+}
+
+.waitlist-drag-handle {
+  width: 50px;
+  height: 5px;
+  border-radius: 3px;
+  background: #555;
+}
+
+.waitlist-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #ccc;
+  display: none; /* hide the close (×) button */
+}
+
+.waitlist-bottom-sheet-content {
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
+  color: #fff;
+}
+
+/* removed Roboto — inherits from your page */
+.waitlist-bottom-sheet-content h1 {
+  font-family: var(--headlinefont);
+  font-size: 20px;
+  font-weight: 500;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.waitlist-form-container {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* =========================================================================
+   RESPONSIVE
+   ========================================================================= */
+
+@media (max-width: 767px) {
+  .event-card {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .tickets-list {
+    align-items: center;
+    width: 100%;
+    min-width: unset;
+  }
+
+  .tickets-info {
+    font-size: 16px;
+    padding: 8px 12px;
+    max-width: 90vw;
+  }
+
+  .details p {
+    font-size: 18px;
+    text-align: center;
+  }
+
+  .details h3 {
+    font-size: 22px;
+    text-align: center;
+  }
+
+  .date p {
+    font-size: 20px;
+    text-align: center;
+  }
+
+  #waitlistBottomSheet {
+    height: 80vh;
+    max-width: 100%;
+    left: 0;
+    transform: translateY(100%);
+  }
+
+  #waitlistBottomSheet.active {
+    transform: translateY(0);
+  }
+}

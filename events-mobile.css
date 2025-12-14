@@ -1,0 +1,397 @@
+/* =========================================================================
+   EVENTS WIDGET — Mobile-First (card layout 1 + fonts from events.css)
+   ========================================================================= */
+
+/* ---------- Root Container ---------- */
+.event-container,
+.AllShows,
+#all-events {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Main event card container (desktop-ish mobile width >= 604px) */
+.event-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  padding: 20px 20px;
+  margin: 0 8px 15px 8px;
+  gap: 12px;
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 10px;
+  position: relative;
+}
+
+/* Left column: event info */
+.event-info-column {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  min-width: 0;
+  gap: 0.5rem;
+  font-family: var(--contentfont);
+}
+
+/* NEAR YOU pill badge */
+.event-card .badge-near-you {
+  position: absolute;
+  top: -10px;
+  left: 20px;
+  background: #f7c05e;
+  color: #000;
+  font-weight: bold;
+  font-size: 12px;
+  border-radius: 50px;
+  padding: 4px 12px;
+  font-family: var(--headlinefont);
+  text-transform: uppercase;
+  z-index: 10;
+  height: 20px;
+  line-height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Date styling */
+.date {
+  text-align: left;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.date p {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #fff;
+  margin: 0;
+  line-height: 1.2;
+  word-wrap: break-word;
+}
+
+/* Event details styling */
+.details {
+  margin: 0;
+  color: #ffffff;
+  text-align: left;
+}
+
+.details h3 {
+  font-size: 18px !important;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+  word-wrap: break-word;
+  text-transform: uppercase;
+  font-family: var(--headlinefont);
+}
+
+.details p {
+  font-size: 16px !important;
+  font-weight: 300 !important;
+  margin: 0;
+  line-height: 1.2 !important;
+  color: rgba(255, 255, 255, 0.8);
+  word-wrap: break-word;
+}
+
+.details .event-title {
+  font-style: italic !important;
+}
+
+/* Right column: ticket buttons */
+.tickets-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 250px;
+  gap: 5px;
+}
+
+/* Ticket button */
+.tickets-info {
+  background: var(--primary-color);
+  color: var(--text-color);
+  padding: 12px 20px;
+  font-size: 18px;
+  font-family: var(--headlinefont);
+  font-weight: 800;
+  border-radius: 8px;
+  text-transform: uppercase;
+  text-decoration: none;
+  margin-bottom: 5px;
+  display: inline-block;
+  text-align: center;
+  transition: 0.2s ease;
+  cursor: pointer;
+  letter-spacing: 1px;
+  min-width: 120px;
+}
+
+.tickets-info:hover {
+  background: #000;
+  color: gold;
+}
+
+/* Showtimes container */
+.showtime-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-bottom: 15px;
+  width: 100%;
+}
+
+.showtime-date {
+  display: none !important;
+  flex-shrink: 0;
+  width: fit-content;
+  margin-bottom: 8px;
+  align-self: flex-end;
+}
+
+.showtime-tickets {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  width: 100%;
+}
+
+.TicketP {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+/* Hide share button visually */
+.share-button,
+.Cicon .SharebtnImg {
+  display: none !important;
+}
+
+.Upshows {
+  display: none;
+  color: #ffffff;
+  font-family: inherit !important;
+  margin-bottom: 40px;
+  text-align: center;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+/* =========================================================================
+   RESPONSIVE BEHAVIOR — stack vertically below 604px
+   ========================================================================= */
+
+@media (max-width: 604px) {
+  .event-card {
+    flex-direction: column;
+    align-items: stretch;
+    margin: 0 5px 15px 5px;
+    padding: 20px 20px;
+    gap: 10px;
+  }
+
+  .tickets-list {
+    align-items: center !important;
+    min-width: unset;
+    width: 100%;
+  }
+
+  .showtime-card {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .showtime-date {
+    width: 100%;
+    margin-bottom: 5px;
+  }
+
+  .showtime-tickets {
+    align-items: center;
+  }
+
+  .TicketP {
+    justify-content: center;
+  }
+
+  .date p {
+    font-size: 16px !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    white-space: normal !important;
+  }
+
+  .details h3 {
+    font-size: 16px !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+  }
+
+  .details p {
+    font-size: 14px !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+  }
+
+  .details {
+    text-align: center !important;
+  }
+
+  .tickets-info {
+    font-size: 16px;
+    padding: 8px 12px;
+    min-width: 100px;
+    max-width: 90vw;
+  }
+
+  .event-card .badge-near-you {
+    font-size: 11px;
+    padding: 3px 10px;
+    top: -9px;
+    left: 20px;
+    height: 18px;
+    line-height: 11px;
+  }
+}
+
+/* =========================================================================
+   WAITLIST BOTTOM SHEET (same as events.css, mobile behavior)
+   ========================================================================= */
+
+#waitlistOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+#waitlistOverlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+#waitlistBottomSheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  transform: translateY(100%);
+  width: 100%;
+  max-width: 100%;
+  background: #05090c;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  height: 80vh;
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  transform-origin: bottom center;
+  will-change: transform;
+}
+
+#waitlistBottomSheet.active {
+  transform: translateY(0);
+}
+
+.waitlist-bottom-sheet-header {
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  touch-action: none;
+  cursor: grab;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.waitlist-bottom-sheet-header:active {
+  cursor: grabbing;
+}
+
+.waitlist-drag-handle {
+  width: 50px;
+  height: 5px;
+  border-radius: 3px;
+  background: #555;
+  transition: 0.2s;
+}
+
+.waitlist-bottom-sheet-header:hover .waitlist-drag-handle {
+  background: #777;
+}
+
+.waitlist-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #ccc;
+  transition: 0.3s;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: none; /* hide the close (×) button */
+}
+
+.waitlist-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.waitlist-bottom-sheet-content {
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  color: #fff;
+}
+
+.waitlist-bottom-sheet-content h1 {
+  font-family: "Roboto Condensed", sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: #fff;
+  text-align: center;
+  margin-bottom: 16px;
+  line-height: 1.2;
+}
+
+.waitlist-form-container {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+/* Desktop alignment and active slide-up behavior */
+@media (min-width: 768px) {
+  #waitlistBottomSheet {
+    left: 50%;
+    transform: translateX(-50%) translateY(100%);
+    max-width: 720px;
+    height: 65vh;
+  }
+
+  #waitlistBottomSheet.active {
+    transform: translateX(-50%) translateY(0);
+  }
+}

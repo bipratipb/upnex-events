@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Events & Location Banner Demo</title>
+
+    <!-- Global Fonts + Variables -->
+    <style>
+      :root {
+        --headlinefont: "Roboto Condensed", sans-serif;
+        --contentfont: "Inter", sans-serif;
+
+        /* Fallback colors (can be overridden via initEvents / initLocationBanner) */
+        --primary-color: #f2fec1;
+        --text-color: #605858;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: var(--contentfont);
+        background: #fff;
+      }
+      .tickets-info {
+        background-color: #000 !important;
+        color: #fff !important;
+      }
+      .tickets-info:hover {
+        background-color: #13004c !important;
+      }
+    </style>
+
+    <!-- Import centralized widget styles -->
+    <link rel="stylesheet" href="/events.css" />
+    <link rel="stylesheet" href="/location-banner.css" />
+
+    <!-- Luxon (for event date/time formatting) -->
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.3.0/build/global/luxon.min.js"></script>
+  </head>
+
+  <body>
+    <!-- ───── LOCATION BANNER (ALWAYS VISIBLE) ───── -->
+    <div id="location-banner-container" class="location-banner-container"></div>
+
+    <!-- ───── EVENTS SECTION ───── -->
+    <section id="events-section" class="event-container">
+      <div class="AllShows">
+        <div id="all-events"></div>
+      </div>
+    </section>
+
+    <!-- ───── Overlay + Bottom Sheet (auto-handled by events.js) ───── -->
+    <div id="waitlistOverlay"></div>
+    <div id="waitlistBottomSheet">
+      <div class="waitlist-bottom-sheet-header">
+        <div class="waitlist-drag-handle"></div>
+        <button class="waitlist-close-btn">&times;</button>
+      </div>
+      <div class="waitlist-bottom-sheet-content">
+        <h1
+          style="
+            font-family: 'Roboto Condensed', sans-serif;
+            font-size: 20px;
+            font-weight: 500;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 16px;
+            line-height: 1.2;
+          "
+        >
+          BE THE FIRST TO KNOW
+        </h1>
+        <iframe class="waitlist-form-container" frameborder="0"></iframe>
+      </div>
+    </div>
+
+    <!-- ───── JS Modules (Centralized) ───── -->
+    <script src="/events.js"></script>
+    <script src="/location-banner.js"></script>
+
+    <script>
+      /* === Initialize Events Widget === */
+      initEvents({
+        locationId: "eomO7PCI0dDIKw9zt9jn",
+        eventPortalToken:
+          "SxbQqrTSrT4DaSgaluKp1wBpKbx4QbGh4H9yb9S7qHcdPY3LUVldDBnyRKdDWc5f",
+        waitlistFormId: "3L6PsJvzgrq6jX5NGTVR", // Your main bottom-sheet form
+        soldOutFormId: "ubMNmeVHKJi0jC5oijpc", // Optional
+        primaryColor: "#0f0f0f",
+        textColor: "#605858",
+        contentFont: "var(--contentfont)",
+        headlineFont: "var(--headlinefont)",
+        nearYouThreshold: 100, // km, optional override
+      });
+
+      /* === Initialize Location Banner === */
+      initLocationBanner({
+        size: "sm", // sm | md | lg
+        color: "#222244", // text color
+        linkColor: "#d0021b", // link color
+        bg: "transparent", // background
+        fontFamily: "Inter, sans-serif",
+      });
+    </script>
+  </body>
+</html>
