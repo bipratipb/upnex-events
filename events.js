@@ -7,7 +7,8 @@
     waitlistFormId: "",
     soldOutFormId: "",
     nearYouThreshold: 100,
-    textColor: "#605858"
+    textColor: "#605858",
+    bottomBorderColor: "#000",
   };
 
   let globalEvents = [];
@@ -16,11 +17,19 @@
   global.initEvents = function (userConfig = {}) {
     config = { ...config, ...userConfig };
 
-    // NEW: Apply text color to CSS variable
+    // Apply text color to CSS variable
     if (config.textColor) {
       document.documentElement.style.setProperty(
         "--events-text-color",
         config.textColor
+      );
+    }
+
+    // Apply bottom border color to CSS variable
+    if (config.bottomBorderColor) {
+      document.documentElement.style.setProperty(
+        "--events-border-color",
+        config.bottomBorderColor
       );
     }
 
@@ -225,8 +234,18 @@
     if (!d) return "";
     const [y, m, day] = d.split("-");
     const months = [
-      "Jan","Feb","Mar","Apr","May","Jun",
-      "Jul","Aug","Sep","Oct","Nov","Dec"
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
     ];
     return `${months[m - 1]} ${parseInt(day, 10)}, ${y}`;
   }
@@ -234,8 +253,18 @@
     if (!d) return "";
     const [y, m, day] = d.split("-");
     const months = [
-      "Jan","Feb","Mar","Apr","May","Jun",
-      "Jul","Aug","Sep","Oct","Nov","Dec"
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
     ];
     return `${months[m - 1]} ${parseInt(day, 10)}`;
   }

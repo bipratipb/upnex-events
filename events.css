@@ -5,6 +5,7 @@
 /* ---------- Root Variables ---------- */
 :root {
   --events-text-color: #605858; /* default fallback */
+  --events-border-color: #000; /* default fallback */
 }
 
 /* ---------- Root Container ---------- */
@@ -24,7 +25,7 @@
   padding: 0.8rem;
   margin-bottom: 10px;
   gap: 1rem;
-  border-bottom: 1px dashed #000;
+  border-bottom: 1px dashed var(--events-border-color, #000);
 }
 
 /* left column */
