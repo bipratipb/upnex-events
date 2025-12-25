@@ -14,10 +14,15 @@
   let globalEvents = [];
   let locationProcessed = false;
 
+  // ✅ Store user location globally for form usage
+  let userLocationGlobal = {
+    lat: null,
+    lon: null,
+  };
+
   global.initEvents = function (userConfig = {}) {
     config = { ...config, ...userConfig };
 
-    // Apply text color to CSS variable
     if (config.textColor) {
       document.documentElement.style.setProperty(
         "--events-text-color",
@@ -25,7 +30,6 @@
       );
     }
 
-    // Apply bottom border color to CSS variable
     if (config.bottomBorderColor) {
       document.documentElement.style.setProperty(
         "--events-border-color",
@@ -72,7 +76,12 @@
 
     try {
       userLoc = await getUserLocation();
+
       if (userLoc && !userLoc.permissionDenied) {
+        // ✅ Persist location globally
+        userLocationGlobal.lat = userLoc.lat;
+        userLocationGlobal.lon = userLoc.lon;
+
         eventsWithDist = globalEvents.map((ev) => {
           const lat = parseFloat(ev.latitude);
           const lon = parseFloat(ev.longitude);
@@ -89,8 +98,10 @@
         const far = eventsWithDist.filter(
           (e) => e.distance > config.nearYouThreshold
         );
+
         nearby.sort((a, b) => getDateTime(a) - getDateTime(b));
         far.sort((a, b) => getDateTime(a) - getDateTime(b));
+
         const ordered = [...nearby, ...far];
         await formatData(ordered, userLoc);
         eventsWithDist = ordered;
@@ -106,6 +117,7 @@
   function getUserLocation() {
     if (!("geolocation" in navigator))
       return Promise.resolve({ permissionDenied: true });
+
     return new Promise((resolve) => {
       navigator.geolocation.getCurrentPosition(
         (pos) =>
@@ -120,10 +132,11 @@
     });
   }
 
-  /* ---------- FORMAT DATA ---------- */
+  /* ---------- FORMAT + DISPLAY ---------- */
   async function formatData(events, userLoc) {
     const now = DateTime.utc();
     const buffer = 6;
+
     const filtered = events.filter((e) => {
       if (e.status !== "live" || !e.startDate) return false;
       const start = DateTime.fromISO(
@@ -133,13 +146,14 @@
       const end = e.endDate
         ? DateTime.fromISO(`${e.endDate}T23:59:59`, { zone: "utc" })
         : start;
+
       return end.plus({ hours: buffer }) >= now;
     });
+
     if (!userLoc) filtered.sort((a, b) => getDateTime(a) - getDateTime(b));
     displayEvents(filtered, userLoc);
   }
 
-  /* ---------- DISPLAY EVENTS ---------- */
   function displayEvents(events, userLoc) {
     const container = document.getElementById("all-events");
     if (!container) return;
@@ -166,25 +180,22 @@
         const range = formatRange(g.showtimeDates);
         const t = g.ticketLink;
 
-        const btnHtml = buildTicketButton({
+        ticketsHTML += `<div class="TicketP">${buildTicketButton({
           ticketLink: t,
           venue,
           labelDate: range,
-        });
-
-        ticketsHTML += `<div class="TicketP">${btnHtml}</div>`;
+        })}</div>`;
       });
 
       (ev.showtimes || [])
         .filter((s) => !groupedIds.has(s.id))
         .forEach((s) => {
           (s.ticketLinks || []).forEach((t) => {
-            const btnHtml = buildTicketButton({
+            ticketsHTML += `<div class="TicketP">${buildTicketButton({
               ticketLink: t,
               venue,
               labelDate: fmtShort(s.date),
-            });
-            ticketsHTML += `<div class="TicketP">${btnHtml}</div>`;
+            })}</div>`;
           });
         });
 
@@ -212,90 +223,40 @@
     const text = t.buttonText || "";
 
     if (t.linkType === "Join Waitlist" && t.ticketLink === "popup") {
-      return `<a href="javascript:void(0)" class="tickets-info" style="background-color:${color}" onclick="joinWaitlistForm('${venue}','${labelDate}')">${text}</a>`;
+      return `<a href="javascript:void(0)" class="tickets-info"
+        style="background-color:${color}"
+        onclick="joinWaitlistForm('${venue}','${labelDate}')">${text}</a>`;
     }
 
     if (t.linkType === "Sold Out" && t.ticketLink === "popup") {
-      return `<a href="javascript:void(0)" class="tickets-info tickets-info-soldout" style="background-color:${color}" onclick="openSoldOutForm('${venue}','${labelDate}')">${text}</a>`;
+      return `<a href="javascript:void(0)" class="tickets-info tickets-info-soldout"
+        style="background-color:${color}"
+        onclick="openSoldOutForm('${venue}','${labelDate}')">${text}</a>`;
     }
 
-    return `<a href="${t.ticketLink}" class="tickets-info" style="background-color:${color}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+    return `<a href="${t.ticketLink}" class="tickets-info"
+      style="background-color:${color}"
+      target="_blank" rel="noopener noreferrer">${text}</a>`;
   }
 
-  function formatRange(dates) {
-    if (!dates?.length) return "";
-    const unique = Array.from(new Set(dates)).sort();
-    if (unique.length === 1) return fmtLong(unique[0]);
-    const start = unique[0],
-      end = unique[unique.length - 1];
-    return `${fmtShort(start)} - ${fmtLong(end)}`;
-  }
-  function fmtLong(d) {
-    if (!d) return "";
-    const [y, m, day] = d.split("-");
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-    return `${months[m - 1]} ${parseInt(day, 10)}, ${y}`;
-  }
-  function fmtShort(d) {
-    if (!d) return "";
-    const [y, m, day] = d.split("-");
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-    return `${months[m - 1]} ${parseInt(day, 10)}`;
-  }
-  function getDateTime(e) {
-    return new Date(`${e.startDate}T${e.startTime || "00:00"}`);
-  }
-  function calcDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371;
-    const φ1 = (lat1 * Math.PI) / 180;
-    const φ2 = (lat2 * Math.PI) / 180;
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-    const a =
-      Math.sin(Δφ / 2) ** 2 +
-      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const d = R * c;
-    return isFinite(d) ? d : Infinity;
-  }
-
-  /* BOTTOM SHEET LOGIC — unchanged */
+  /* ---------- FORMS (UPDATED) ---------- */
   global.joinWaitlistForm = function (venue = "", date = "") {
     const overlay = document.getElementById("waitlistOverlay");
     const sheet = document.getElementById("waitlistBottomSheet");
     const iframe = sheet?.querySelector(".waitlist-form-container");
     if (!overlay || !sheet || !iframe || !config.waitlistFormId) return;
 
-    const base = `https://api.leadconnectorhq.com/widget/form/${config.waitlistFormId}`;
-    const url = new URL(base);
+    const url = new URL(
+      `https://api.leadconnectorhq.com/widget/form/${config.waitlistFormId}`
+    );
+
     if (venue || date)
       url.searchParams.set("waitlist", `${venue} ${date}`.trim());
+
+    if (userLocationGlobal.lat && userLocationGlobal.lon) {
+      url.searchParams.set("latitude", userLocationGlobal.lat);
+      url.searchParams.set("longitude", userLocationGlobal.lon);
+    }
 
     iframe.src = url.toString();
     overlay.classList.add("active");
@@ -307,6 +268,7 @@
       sheet.classList.remove("active");
       document.body.style.overflow = "";
     };
+
     overlay.onclick = close;
     sheet.querySelector(".waitlist-close-btn").onclick = close;
   };
@@ -317,10 +279,17 @@
     const iframe = sheet?.querySelector(".waitlist-form-container");
     if (!overlay || !sheet || !iframe || !config.soldOutFormId) return;
 
-    const base = `https://api.leadconnectorhq.com/widget/form/${config.soldOutFormId}`;
-    const url = new URL(base);
+    const url = new URL(
+      `https://api.leadconnectorhq.com/widget/form/${config.soldOutFormId}`
+    );
+
     if (venue || date)
       url.searchParams.set("soldout", `${venue} ${date}`.trim());
+
+    if (userLocationGlobal.lat && userLocationGlobal.lon) {
+      url.searchParams.set("latitude", userLocationGlobal.lat);
+      url.searchParams.set("longitude", userLocationGlobal.lon);
+    }
 
     iframe.src = url.toString();
     overlay.classList.add("active");
@@ -332,10 +301,48 @@
       sheet.classList.remove("active");
       document.body.style.overflow = "";
     };
+
     overlay.onclick = close;
     sheet.querySelector(".waitlist-close-btn").onclick = close;
   };
 
+  /* ---------- HELPERS ---------- */
+  function formatRange(dates) {
+    if (!dates?.length) return "";
+    const unique = Array.from(new Set(dates)).sort();
+    if (unique.length === 1) return fmtLong(unique[0]);
+    return `${fmtShort(unique[0])} - ${fmtLong(unique[unique.length - 1])}`;
+  }
+
+  function fmtLong(d) {
+    if (!d) return "";
+    const [y, m, day] = d.split("-");
+    return `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m-1]} ${parseInt(day,10)}, ${y}`;
+  }
+
+  function fmtShort(d) {
+    if (!d) return "";
+    const [, m, day] = d.split("-");
+    return `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m-1]} ${parseInt(day,10)}`;
+  }
+
+  function getDateTime(e) {
+    return new Date(`${e.startDate}T${e.startTime || "00:00"}`);
+  }
+
+  function calcDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) ** 2;
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  }
+
+  /* ---------- BOTTOM SHEET DRAG (UNCHANGED) ---------- */
   function attachBottomSheetDragHandlers() {
     document.addEventListener("DOMContentLoaded", () => {
       const sheet = document.getElementById("waitlistBottomSheet");
@@ -363,6 +370,7 @@
         dragging = false;
         const delta = Math.max(0, currentY - startY);
         const threshold = Math.min(150, sheet.offsetHeight * 0.33);
+
         sheet.style.transition = "transform .3s ease";
         overlay.style.transition = "opacity .25s ease";
 
