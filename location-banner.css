@@ -12,7 +12,7 @@
   color: #fff;
   text-transform: uppercase;
   line-height: 1.4;
-  padding: 12px 15px;
+  padding: 2px 12px;
 }
 
 .location-banner-container a {
@@ -25,6 +25,6 @@
 @media (max-width: 767px) {
   .location-banner-container {
     font-size: 13px;
-    padding: 10px 12px;
+    padding: 2px 12px;
   }
 }
