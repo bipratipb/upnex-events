@@ -14,11 +14,19 @@
   let globalEvents = [];
   let locationProcessed = false;
 
-  // ✅ Store user location globally for form usage
+  // Store user location globally for form usage (unchanged)
   let userLocationGlobal = {
     lat: null,
     lon: null,
   };
+
+  /* ============================================================
+     ADDITION: submission_id generator (SAFE, ADDITIVE)
+     ============================================================ */
+  function generateSubmissionId() {
+    if (crypto?.randomUUID) return crypto.randomUUID();
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
 
   global.initEvents = function (userConfig = {}) {
     config = { ...config, ...userConfig };
@@ -78,7 +86,6 @@
       userLoc = await getUserLocation();
 
       if (userLoc && !userLoc.permissionDenied) {
-        // ✅ Persist location globally
         userLocationGlobal.lat = userLoc.lat;
         userLocationGlobal.lon = userLoc.lon;
 
@@ -239,12 +246,14 @@
       target="_blank" rel="noopener noreferrer">${text}</a>`;
   }
 
-  /* ---------- FORMS (UPDATED) ---------- */
+  /* ---------- FORMS (SAFE ADDITION ONLY) ---------- */
   global.joinWaitlistForm = function (venue = "", date = "") {
     const overlay = document.getElementById("waitlistOverlay");
     const sheet = document.getElementById("waitlistBottomSheet");
     const iframe = sheet?.querySelector(".waitlist-form-container");
     if (!overlay || !sheet || !iframe || !config.waitlistFormId) return;
+
+    const submissionId = generateSubmissionId(); // ADDITION
 
     const url = new URL(
       `https://api.leadconnectorhq.com/widget/form/${config.waitlistFormId}`
@@ -252,6 +261,8 @@
 
     if (venue || date)
       url.searchParams.set("waitlist", `${venue} ${date}`.trim());
+
+    url.searchParams.set("submission_id", submissionId); // ADDITION
 
     if (userLocationGlobal.lat && userLocationGlobal.lon) {
       url.searchParams.set("latitude", userLocationGlobal.lat);
@@ -279,12 +290,16 @@
     const iframe = sheet?.querySelector(".waitlist-form-container");
     if (!overlay || !sheet || !iframe || !config.soldOutFormId) return;
 
+    const submissionId = generateSubmissionId(); // ADDITION
+
     const url = new URL(
       `https://api.leadconnectorhq.com/widget/form/${config.soldOutFormId}`
     );
 
     if (venue || date)
       url.searchParams.set("soldout", `${venue} ${date}`.trim());
+
+    url.searchParams.set("submission_id", submissionId); // ADDITION
 
     if (userLocationGlobal.lat && userLocationGlobal.lon) {
       url.searchParams.set("latitude", userLocationGlobal.lat);
