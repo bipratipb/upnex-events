@@ -14,18 +14,23 @@
   let globalEvents = [];
   let locationProcessed = false;
 
-  // Store user location globally for form usage (unchanged)
   let userLocationGlobal = {
     lat: null,
     lon: null,
   };
 
-  /* ============================================================
-     ADDITION: submission_id generator (SAFE, ADDITIVE)
-     ============================================================ */
   function generateSubmissionId() {
     if (crypto?.randomUUID) return crypto.randomUUID();
     return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  /* ============================================================
+     FIX: escape strings ONLY for inline JS (apostrophe-safe)
+     ============================================================ */
+  function esc(str = "") {
+    return String(str)
+      .replace(/\\/g, "\\\\")
+      .replace(/'/g, "\\'");
   }
 
   global.initEvents = function (userConfig = {}) {
@@ -49,7 +54,6 @@
     attachBottomSheetDragHandlers();
   };
 
-  /* ---------- FETCH EVENTS ---------- */
   async function getData() {
     const res = await fetchData();
     const events = res?.data?.events || [];
@@ -74,7 +78,6 @@
     }
   }
 
-  /* ---------- GEOLOCATION ---------- */
   async function getUserLocationAsync() {
     if (locationProcessed) return;
     locationProcessed = true;
@@ -116,8 +119,11 @@
     } catch (e) {
       console.warn("Location failed:", e);
     } finally {
-      const detail = { userLocation: userLoc, events: eventsWithDist };
-      document.dispatchEvent(new CustomEvent("eventsDataReady", { detail }));
+      document.dispatchEvent(
+        new CustomEvent("eventsDataReady", {
+          detail: { userLocation: userLoc, events: eventsWithDist },
+        })
+      );
     }
   }
 
@@ -139,7 +145,6 @@
     });
   }
 
-  /* ---------- FORMAT + DISPLAY ---------- */
   async function formatData(events, userLoc) {
     const now = DateTime.utc();
     const buffer = 6;
@@ -184,13 +189,10 @@
 
       (ev.ticketLinkGroups || []).forEach((g) => {
         g.showtimeIds.forEach((id) => groupedIds.add(id));
-        const range = formatRange(g.showtimeDates);
-        const t = g.ticketLink;
-
         ticketsHTML += `<div class="TicketP">${buildTicketButton({
-          ticketLink: t,
+          ticketLink: g.ticketLink,
           venue,
-          labelDate: range,
+          labelDate: formatRange(g.showtimeDates),
         })}</div>`;
       });
 
@@ -232,13 +234,13 @@
     if (t.linkType === "Join Waitlist" && t.ticketLink === "popup") {
       return `<a href="javascript:void(0)" class="tickets-info"
         style="background-color:${color}"
-        onclick="joinWaitlistForm('${venue}','${labelDate}')">${text}</a>`;
+        onclick="joinWaitlistForm('${esc(venue)}','${esc(labelDate)}')">${text}</a>`;
     }
 
     if (t.linkType === "Sold Out" && t.ticketLink === "popup") {
       return `<a href="javascript:void(0)" class="tickets-info tickets-info-soldout"
         style="background-color:${color}"
-        onclick="openSoldOutForm('${venue}','${labelDate}')">${text}</a>`;
+        onclick="openSoldOutForm('${esc(venue)}','${esc(labelDate)}')">${text}</a>`;
     }
 
     return `<a href="${t.ticketLink}" class="tickets-info"
@@ -246,14 +248,11 @@
       target="_blank" rel="noopener noreferrer">${text}</a>`;
   }
 
-  /* ---------- FORMS (SAFE ADDITION ONLY) ---------- */
   global.joinWaitlistForm = function (venue = "", date = "") {
     const overlay = document.getElementById("waitlistOverlay");
     const sheet = document.getElementById("waitlistBottomSheet");
     const iframe = sheet?.querySelector(".waitlist-form-container");
     if (!overlay || !sheet || !iframe || !config.waitlistFormId) return;
-
-    const submissionId = generateSubmissionId(); // ADDITION
 
     const url = new URL(
       `https://api.leadconnectorhq.com/widget/form/${config.waitlistFormId}`
@@ -261,13 +260,6 @@
 
     if (venue || date)
       url.searchParams.set("waitlist", `${venue} ${date}`.trim());
-
-    url.searchParams.set("submission_id", submissionId); // ADDITION
-
-    if (userLocationGlobal.lat && userLocationGlobal.lon) {
-      url.searchParams.set("latitude", userLocationGlobal.lat);
-      url.searchParams.set("longitude", userLocationGlobal.lon);
-    }
 
     iframe.src = url.toString();
     overlay.classList.add("active");
@@ -290,21 +282,12 @@
     const iframe = sheet?.querySelector(".waitlist-form-container");
     if (!overlay || !sheet || !iframe || !config.soldOutFormId) return;
 
-    const submissionId = generateSubmissionId(); // ADDITION
-
     const url = new URL(
       `https://api.leadconnectorhq.com/widget/form/${config.soldOutFormId}`
     );
 
     if (venue || date)
       url.searchParams.set("soldout", `${venue} ${date}`.trim());
-
-    url.searchParams.set("submission_id", submissionId); // ADDITION
-
-    if (userLocationGlobal.lat && userLocationGlobal.lon) {
-      url.searchParams.set("latitude", userLocationGlobal.lat);
-      url.searchParams.set("longitude", userLocationGlobal.lon);
-    }
 
     iframe.src = url.toString();
     overlay.classList.add("active");
@@ -321,7 +304,6 @@
     sheet.querySelector(".waitlist-close-btn").onclick = close;
   };
 
-  /* ---------- HELPERS ---------- */
   function formatRange(dates) {
     if (!dates?.length) return "";
     const unique = Array.from(new Set(dates)).sort();
@@ -357,7 +339,6 @@
     return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
   }
 
-  /* ---------- BOTTOM SHEET DRAG (UNCHANGED) ---------- */
   function attachBottomSheetDragHandlers() {
     document.addEventListener("DOMContentLoaded", () => {
       const sheet = document.getElementById("waitlistBottomSheet");
