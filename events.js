@@ -24,9 +24,6 @@
     return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
 
-  /* ============================================================
-     FIX: escape strings ONLY for inline JS (apostrophe-safe)
-     ============================================================ */
   function esc(str = "") {
     return String(str)
       .replace(/\\/g, "\\\\")
@@ -248,6 +245,9 @@
       target="_blank" rel="noopener noreferrer">${text}</a>`;
   }
 
+  /* ============================================================
+     UPDATED: Join Waitlist Form (NOW PASSES LAT / LON)
+     ============================================================ */
   global.joinWaitlistForm = function (venue = "", date = "") {
     const overlay = document.getElementById("waitlistOverlay");
     const sheet = document.getElementById("waitlistBottomSheet");
@@ -258,8 +258,23 @@
       `https://api.leadconnectorhq.com/widget/form/${config.waitlistFormId}`
     );
 
-    if (venue || date)
+    if (venue || date) {
       url.searchParams.set("waitlist", `${venue} ${date}`.trim());
+    }
+
+    if (
+      typeof userLocationGlobal.lat === "number" &&
+      typeof userLocationGlobal.lon === "number"
+    ) {
+      url.searchParams.set(
+        "latitude",
+        userLocationGlobal.lat.toFixed(6)
+      );
+      url.searchParams.set(
+        "longitude",
+        userLocationGlobal.lon.toFixed(6)
+      );
+    }
 
     iframe.src = url.toString();
     overlay.classList.add("active");
