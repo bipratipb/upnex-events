@@ -14,20 +14,10 @@
   let globalEvents = [];
   let locationProcessed = false;
 
-  let userLocationGlobal = {
-    lat: null,
-    lon: null,
-  };
-
-  function generateSubmissionId() {
-    if (crypto?.randomUUID) return crypto.randomUUID();
-    return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  }
+  let userLocationGlobal = { lat: null, lon: null };
 
   function esc(str = "") {
-    return String(str)
-      .replace(/\\/g, "\\\\")
-      .replace(/'/g, "\\'");
+    return String(str).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
   }
 
   global.initEvents = function (userConfig = {}) {
@@ -69,8 +59,7 @@
         },
       });
       return await r.json();
-    } catch (err) {
-      console.error("Event fetch failed:", err);
+    } catch {
       return { data: { events: [] } };
     }
   }
@@ -86,15 +75,21 @@
       userLoc = await getUserLocation();
 
       if (userLoc && !userLoc.permissionDenied) {
-        userLocationGlobal.lat = userLoc.lat;
-        userLocationGlobal.lon = userLoc.lon;
+        userLocationGlobal = userLoc;
 
         eventsWithDist = globalEvents.map((ev) => {
           const lat = parseFloat(ev.latitude);
           const lon = parseFloat(ev.longitude);
           if (isFinite(lat) && isFinite(lon)) {
-            const d = calcDistance(userLoc.lat, userLoc.lon, lat, lon);
-            return { ...ev, distance: d };
+            return {
+              ...ev,
+              distance: calcDistance(
+                userLoc.lat,
+                userLoc.lon,
+                lat,
+                lon
+              ),
+            };
           }
           return { ...ev, distance: Infinity };
         });
@@ -111,10 +106,7 @@
 
         const ordered = [...nearby, ...far];
         await formatData(ordered, userLoc);
-        eventsWithDist = ordered;
       }
-    } catch (e) {
-      console.warn("Location failed:", e);
     } finally {
       document.dispatchEvent(
         new CustomEvent("eventsDataReady", {
@@ -125,7 +117,7 @@
   }
 
   function getUserLocation() {
-    if (!("geolocation" in navigator))
+    if (!navigator.geolocation)
       return Promise.resolve({ permissionDenied: true });
 
     return new Promise((resolve) => {
@@ -137,30 +129,48 @@
             permissionDenied: false,
           }),
         () => resolve({ permissionDenied: true }),
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 10000 }
       );
     });
   }
 
+  /* ============================================================
+     FIXED TIME FILTER (UTC-SAFE, MINIMAL CHANGE)
+     ============================================================ */
   async function formatData(events, userLoc) {
     const now = DateTime.utc();
     const buffer = 6;
 
     const filtered = events.filter((e) => {
-      if (e.status !== "live" || !e.startDate) return false;
-      const start = DateTime.fromISO(
-        `${e.startDate}T${e.startTime || "00:00"}`,
-        { zone: "utc" }
-      );
-      const end = e.endDate
-        ? DateTime.fromISO(`${e.endDate}T23:59:59`, { zone: "utc" })
-        : start;
+      if (!e.status || e.status.toLowerCase() !== "live") return false;
 
-      return end.plus({ hours: buffer }) >= now;
+      const ts =
+        e.utcTimestamp ||
+        e.showtimes?.[0]?.utcTimestamp ||
+        null;
+
+      if (!ts && !e.startDate) return false;
+
+      const start = ts
+        ? DateTime.fromISO(ts, { zone: "utc" })
+        : DateTime.fromISO(
+            `${e.startDate}T${e.startTime || "00:00"}`,
+            { zone: "utc" }
+          );
+
+      return start.plus({ hours: buffer }) >= now;
     });
 
     if (!userLoc) filtered.sort((a, b) => getDateTime(a) - getDateTime(b));
     displayEvents(filtered, userLoc);
+  }
+
+  function getDateTime(e) {
+    const ts =
+      e.utcTimestamp ||
+      e.showtimes?.[0]?.utcTimestamp ||
+      `${e.startDate}T${e.startTime || "00:00"}Z`;
+    return new Date(ts);
   }
 
   function displayEvents(events, userLoc) {
@@ -245,85 +255,12 @@
       target="_blank" rel="noopener noreferrer">${text}</a>`;
   }
 
-  /* ============================================================
-     UPDATED: Join Waitlist Form (NOW PASSES LAT / LON)
-     ============================================================ */
-  global.joinWaitlistForm = function (venue = "", date = "") {
-    const overlay = document.getElementById("waitlistOverlay");
-    const sheet = document.getElementById("waitlistBottomSheet");
-    const iframe = sheet?.querySelector(".waitlist-form-container");
-    if (!overlay || !sheet || !iframe || !config.waitlistFormId) return;
-
-    const url = new URL(
-      `https://api.leadconnectorhq.com/widget/form/${config.waitlistFormId}`
-    );
-
-    if (venue || date) {
-      url.searchParams.set("waitlist", `${venue} ${date}`.trim());
-    }
-
-    if (
-      typeof userLocationGlobal.lat === "number" &&
-      typeof userLocationGlobal.lon === "number"
-    ) {
-      url.searchParams.set(
-        "latitude",
-        userLocationGlobal.lat.toFixed(6)
-      );
-      url.searchParams.set(
-        "longitude",
-        userLocationGlobal.lon.toFixed(6)
-      );
-    }
-
-    iframe.src = url.toString();
-    overlay.classList.add("active");
-    sheet.classList.add("active");
-    document.body.style.overflow = "hidden";
-
-    const close = () => {
-      overlay.classList.remove("active");
-      sheet.classList.remove("active");
-      document.body.style.overflow = "";
-    };
-
-    overlay.onclick = close;
-    sheet.querySelector(".waitlist-close-btn").onclick = close;
-  };
-
-  global.openSoldOutForm = function (venue = "", date = "") {
-    const overlay = document.getElementById("waitlistOverlay");
-    const sheet = document.getElementById("waitlistBottomSheet");
-    const iframe = sheet?.querySelector(".waitlist-form-container");
-    if (!overlay || !sheet || !iframe || !config.soldOutFormId) return;
-
-    const url = new URL(
-      `https://api.leadconnectorhq.com/widget/form/${config.soldOutFormId}`
-    );
-
-    if (venue || date)
-      url.searchParams.set("soldout", `${venue} ${date}`.trim());
-
-    iframe.src = url.toString();
-    overlay.classList.add("active");
-    sheet.classList.add("active");
-    document.body.style.overflow = "hidden";
-
-    const close = () => {
-      overlay.classList.remove("active");
-      sheet.classList.remove("active");
-      document.body.style.overflow = "";
-    };
-
-    overlay.onclick = close;
-    sheet.querySelector(".waitlist-close-btn").onclick = close;
-  };
-
   function formatRange(dates) {
     if (!dates?.length) return "";
-    const unique = Array.from(new Set(dates)).sort();
-    if (unique.length === 1) return fmtLong(unique[0]);
-    return `${fmtShort(unique[0])} - ${fmtLong(unique[unique.length - 1])}`;
+    const u = [...new Set(dates)].sort();
+    return u.length === 1
+      ? fmtLong(u[0])
+      : `${fmtShort(u[0])} - ${fmtLong(u[u.length - 1])}`;
   }
 
   function fmtLong(d) {
@@ -336,10 +273,6 @@
     if (!d) return "";
     const [, m, day] = d.split("-");
     return `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m-1]} ${parseInt(day,10)}`;
-  }
-
-  function getDateTime(e) {
-    return new Date(`${e.startDate}T${e.startTime || "00:00"}`);
   }
 
   function calcDistance(lat1, lon1, lat2, lon2) {
@@ -371,9 +304,7 @@
           window.innerWidth > 768
             ? `translateX(-50%) translateY(${delta}px)`
             : `translateY(${delta}px)`;
-        overlay.style.opacity = String(
-          Math.max(0.25, 1 - delta / window.innerHeight)
-        );
+        overlay.style.opacity = Math.max(0.25, 1 - delta / window.innerHeight);
       };
 
       const end = () => {
@@ -381,9 +312,6 @@
         dragging = false;
         const delta = Math.max(0, currentY - startY);
         const threshold = Math.min(150, sheet.offsetHeight * 0.33);
-
-        sheet.style.transition = "transform .3s ease";
-        overlay.style.transition = "opacity .25s ease";
 
         if (delta > threshold) {
           overlay.classList.remove("active");
@@ -396,47 +324,29 @@
               : "translateY(0)";
           overlay.style.opacity = "1";
         }
-
-        setTimeout(() => {
-          sheet.style.transition = "";
-          overlay.style.transition = "";
-        }, 300);
       };
 
       header.addEventListener("mousedown", (e) => {
         dragging = true;
         startY = e.clientY;
-        sheet.style.transition = "none";
-        overlay.style.transition = "none";
-        document.addEventListener("mousemove", onMouseMove);
-        document.addEventListener("mouseup", onMouseUp);
+        document.addEventListener("mousemove", (e) => {
+          currentY = e.clientY;
+          move(currentY);
+        });
+        document.addEventListener("mouseup", end, { once: true });
       });
-
-      const onMouseMove = (e) => {
-        currentY = e.clientY;
-        if (dragging) move(currentY);
-      };
-
-      const onMouseUp = () => {
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
-        end();
-      };
 
       header.addEventListener("touchstart", (e) => {
         dragging = true;
         startY = e.touches[0].clientY;
-        sheet.style.transition = "none";
-        overlay.style.transition = "none";
       });
 
       header.addEventListener("touchmove", (e) => {
         currentY = e.touches[0].clientY;
-        if (dragging) move(currentY);
+        move(currentY);
       });
 
       header.addEventListener("touchend", end);
-      header.addEventListener("touchcancel", end);
     });
   }
 })(window);
