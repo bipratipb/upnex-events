@@ -104,8 +104,7 @@
         nearby.sort((a, b) => getDateTime(a) - getDateTime(b));
         far.sort((a, b) => getDateTime(a) - getDateTime(b));
 
-        const ordered = [...nearby, ...far];
-        await formatData(ordered, userLoc);
+        await formatData([...nearby, ...far], userLoc);
       }
     } finally {
       document.dispatchEvent(
@@ -134,9 +133,7 @@
     });
   }
 
-  /* ============================================================
-     FIXED TIME FILTER (UTC-SAFE, MINIMAL CHANGE)
-     ============================================================ */
+  /* ===================== TIME FILTER (UTC SAFE) ===================== */
   async function formatData(events, userLoc) {
     const now = DateTime.utc();
     const buffer = 6;
@@ -255,6 +252,68 @@
       target="_blank" rel="noopener noreferrer">${text}</a>`;
   }
 
+  global.joinWaitlistForm = function (venue = "", date = "") {
+    const overlay = document.getElementById("waitlistOverlay");
+    const sheet = document.getElementById("waitlistBottomSheet");
+    const iframe = sheet?.querySelector(".waitlist-form-container");
+    if (!overlay || !sheet || !iframe || !config.waitlistFormId) return;
+
+    const url = new URL(
+      `https://api.leadconnectorhq.com/widget/form/${config.waitlistFormId}`
+    );
+
+    if (venue || date) url.searchParams.set("waitlist", `${venue} ${date}`.trim());
+
+    if (
+      typeof userLocationGlobal.lat === "number" &&
+      typeof userLocationGlobal.lon === "number"
+    ) {
+      url.searchParams.set("latitude", userLocationGlobal.lat.toFixed(6));
+      url.searchParams.set("longitude", userLocationGlobal.lon.toFixed(6));
+    }
+
+    iframe.src = url.toString();
+    overlay.classList.add("active");
+    sheet.classList.add("active");
+    document.body.style.overflow = "hidden";
+
+    const close = () => {
+      overlay.classList.remove("active");
+      sheet.classList.remove("active");
+      document.body.style.overflow = "";
+    };
+
+    overlay.onclick = close;
+    sheet.querySelector(".waitlist-close-btn").onclick = close;
+  };
+
+  global.openSoldOutForm = function (venue = "", date = "") {
+    const overlay = document.getElementById("waitlistOverlay");
+    const sheet = document.getElementById("waitlistBottomSheet");
+    const iframe = sheet?.querySelector(".waitlist-form-container");
+    if (!overlay || !sheet || !iframe || !config.soldOutFormId) return;
+
+    const url = new URL(
+      `https://api.leadconnectorhq.com/widget/form/${config.soldOutFormId}`
+    );
+
+    if (venue || date) url.searchParams.set("soldout", `${venue} ${date}`.trim());
+
+    iframe.src = url.toString();
+    overlay.classList.add("active");
+    sheet.classList.add("active");
+    document.body.style.overflow = "hidden";
+
+    const close = () => {
+      overlay.classList.remove("active");
+      sheet.classList.remove("active");
+      document.body.style.overflow = "";
+    };
+
+    overlay.onclick = close;
+    sheet.querySelector(".waitlist-close-btn").onclick = close;
+  };
+
   function formatRange(dates) {
     if (!dates?.length) return "";
     const u = [...new Set(dates)].sort();
@@ -264,13 +323,11 @@
   }
 
   function fmtLong(d) {
-    if (!d) return "";
     const [y, m, day] = d.split("-");
     return `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m-1]} ${parseInt(day,10)}, ${y}`;
   }
 
   function fmtShort(d) {
-    if (!d) return "";
     const [, m, day] = d.split("-");
     return `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m-1]} ${parseInt(day,10)}`;
   }
@@ -287,16 +344,15 @@
     return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
   }
 
+  /* ===================== CRITICAL FIX ===================== */
   function attachBottomSheetDragHandlers() {
-    document.addEventListener("DOMContentLoaded", () => {
+    const init = () => {
       const sheet = document.getElementById("waitlistBottomSheet");
       const overlay = document.getElementById("waitlistOverlay");
       const header = sheet?.querySelector(".waitlist-bottom-sheet-header");
       if (!sheet || !overlay || !header) return;
 
-      let dragging = false,
-        startY = 0,
-        currentY = 0;
+      let dragging = false, startY = 0, currentY = 0;
 
       const move = (y) => {
         const delta = Math.max(0, y - startY);
@@ -347,6 +403,12 @@
       });
 
       header.addEventListener("touchend", end);
-    });
+    };
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", init);
+    } else {
+      init();
+    }
   }
 })(window);
