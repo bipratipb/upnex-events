@@ -155,8 +155,6 @@
             { zone: "utc" }
           );
 
-      // ✅ CRITICAL FIX:
-      // If endDate exists, keep event alive until end of that day (+ buffer)
       const end = e.endDate
         ? DateTime.fromISO(`${e.endDate}T23:59:59`, { zone: "utc" })
         : start;
@@ -304,6 +302,14 @@
     );
 
     if (venue || date) url.searchParams.set("soldout", `${venue} ${date}`.trim());
+
+    if (
+      typeof userLocationGlobal.lat === "number" &&
+      typeof userLocationGlobal.lon === "number"
+    ) {
+      url.searchParams.set("latitude", userLocationGlobal.lat.toFixed(6));
+      url.searchParams.set("longitude", userLocationGlobal.lon.toFixed(6));
+    }
 
     iframe.src = url.toString();
     overlay.classList.add("active");
