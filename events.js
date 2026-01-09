@@ -301,7 +301,7 @@
       `https://api.leadconnectorhq.com/widget/form/${config.soldOutFormId}`
     );
 
-    if (venue || date) url.searchParams.set("soldout", `${venue} ${date}`.trim());
+    if (venue || date) url.searchParams.set("waitlist", `${venue} ${date}`.trim());
 
     if (
       typeof userLocationGlobal.lat === "number" &&
