@@ -155,7 +155,13 @@
             { zone: "utc" }
           );
 
-      return start.plus({ hours: buffer }) >= now;
+      // ✅ CRITICAL FIX:
+      // If endDate exists, keep event alive until end of that day (+ buffer)
+      const end = e.endDate
+        ? DateTime.fromISO(`${e.endDate}T23:59:59`, { zone: "utc" })
+        : start;
+
+      return end.plus({ hours: buffer }) >= now;
     });
 
     if (!userLoc) filtered.sort((a, b) => getDateTime(a) - getDateTime(b));
@@ -344,7 +350,7 @@
     return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
   }
 
-  /* ===================== CRITICAL FIX ===================== */
+  /* ===================== BOTTOM SHEET DRAG ===================== */
   function attachBottomSheetDragHandlers() {
     const init = () => {
       const sheet = document.getElementById("waitlistBottomSheet");
