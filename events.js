@@ -256,6 +256,20 @@
       target="_blank" rel="noopener noreferrer">${text}</a>`;
   }
 
+  function closeBottomSheet() {
+    const overlay = document.getElementById("waitlistOverlay");
+    const sheet = document.getElementById("waitlistBottomSheet");
+    if (!overlay || !sheet) return;
+
+    overlay.classList.remove("active");
+    sheet.classList.remove("active");
+    document.body.style.overflow = "";
+    
+    // Reset any transforms
+    sheet.style.transform = "";
+    overlay.style.opacity = "";
+  }
+
   global.joinWaitlistForm = function (venue = "", date = "") {
     const overlay = document.getElementById("waitlistOverlay");
     const sheet = document.getElementById("waitlistBottomSheet");
@@ -281,14 +295,20 @@
     sheet.classList.add("active");
     document.body.style.overflow = "hidden";
 
-    const close = () => {
-      overlay.classList.remove("active");
-      sheet.classList.remove("active");
-      document.body.style.overflow = "";
-    };
+    // Setup click outside to close
+    setTimeout(() => {
+      overlay.onclick = function(e) {
+        if (e.target === overlay) {
+          closeBottomSheet();
+        }
+      };
+    }, 100);
 
-    overlay.onclick = close;
-    sheet.querySelector(".waitlist-close-btn").onclick = close;
+    // Setup close button
+    const closeBtn = sheet.querySelector(".waitlist-close-btn");
+    if (closeBtn) {
+      closeBtn.onclick = closeBottomSheet;
+    }
   };
 
   global.openSoldOutForm = function (venue = "", date = "") {
@@ -316,14 +336,20 @@
     sheet.classList.add("active");
     document.body.style.overflow = "hidden";
 
-    const close = () => {
-      overlay.classList.remove("active");
-      sheet.classList.remove("active");
-      document.body.style.overflow = "";
-    };
+    // Setup click outside to close
+    setTimeout(() => {
+      overlay.onclick = function(e) {
+        if (e.target === overlay) {
+          closeBottomSheet();
+        }
+      };
+    }, 100);
 
-    overlay.onclick = close;
-    sheet.querySelector(".waitlist-close-btn").onclick = close;
+    // Setup close button
+    const closeBtn = sheet.querySelector(".waitlist-close-btn");
+    if (closeBtn) {
+      closeBtn.onclick = closeBottomSheet;
+    }
   };
 
   function formatRange(dates) {
@@ -364,57 +390,89 @@
       const header = sheet?.querySelector(".waitlist-bottom-sheet-header");
       if (!sheet || !overlay || !header) return;
 
-      let dragging = false, startY = 0, currentY = 0;
+      let isDragging = false;
+      let startY = 0;
+      let currentTranslate = 0;
 
-      const move = (y) => {
-        const delta = Math.max(0, y - startY);
-        sheet.style.transform =
-          window.innerWidth > 768
-            ? `translateX(-50%) translateY(${delta}px)`
-            : `translateY(${delta}px)`;
-        overlay.style.opacity = Math.max(0.25, 1 - delta / window.innerHeight);
-      };
-
-      const end = () => {
-        if (!dragging) return;
-        dragging = false;
-        const delta = Math.max(0, currentY - startY);
-        const threshold = Math.min(150, sheet.offsetHeight * 0.33);
-
-        if (delta > threshold) {
-          overlay.classList.remove("active");
-          sheet.classList.remove("active");
-          document.body.style.overflow = "";
-        } else {
-          sheet.style.transform =
-            window.innerWidth > 768
-              ? "translateX(-50%) translateY(0)"
-              : "translateY(0)";
-          overlay.style.opacity = "1";
+      const handleMouseMove = (e) => {
+        if (!isDragging) return;
+        const deltaY = e.clientY - startY;
+        if (deltaY > 0) {
+          currentTranslate = deltaY;
+          if (window.innerWidth > 768) {
+            sheet.style.transform = `translateX(-50%) translateY(${deltaY}px)`;
+          } else {
+            sheet.style.transform = `translateY(${deltaY}px)`;
+          }
+          overlay.style.opacity = Math.max(0.3, 1 - deltaY / 400);
         }
       };
 
+      const handleMouseUp = () => {
+        if (!isDragging) return;
+        isDragging = false;
+
+        // If dragged down more than 100px, close it
+        if (currentTranslate > 100) {
+          closeBottomSheet();
+        } else {
+          // Snap back
+          sheet.style.transform = window.innerWidth > 768 ? "translateX(-50%) translateY(0)" : "translateY(0)";
+          overlay.style.opacity = "1";
+        }
+
+        currentTranslate = 0;
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      };
+
+      const handleTouchMove = (e) => {
+        if (!isDragging) return;
+        const touch = e.touches[0];
+        const deltaY = touch.clientY - startY;
+        if (deltaY > 0) {
+          currentTranslate = deltaY;
+          if (window.innerWidth > 768) {
+            sheet.style.transform = `translateX(-50%) translateY(${deltaY}px)`;
+          } else {
+            sheet.style.transform = `translateY(${deltaY}px)`;
+          }
+          overlay.style.opacity = Math.max(0.3, 1 - deltaY / 400);
+        }
+      };
+
+      const handleTouchEnd = () => {
+        if (!isDragging) return;
+        isDragging = false;
+
+        // If dragged down more than 100px, close it
+        if (currentTranslate > 100) {
+          closeBottomSheet();
+        } else {
+          // Snap back
+          sheet.style.transform = window.innerWidth > 768 ? "translateX(-50%) translateY(0)" : "translateY(0)";
+          overlay.style.opacity = "1";
+        }
+
+        currentTranslate = 0;
+      };
+
       header.addEventListener("mousedown", (e) => {
-        dragging = true;
+        isDragging = true;
         startY = e.clientY;
-        document.addEventListener("mousemove", (e) => {
-          currentY = e.clientY;
-          move(currentY);
-        });
-        document.addEventListener("mouseup", end, { once: true });
+        currentTranslate = 0;
+        document.addEventListener("mousemove", handleMouseMove);
+        document.addEventListener("mouseup", handleMouseUp);
       });
 
       header.addEventListener("touchstart", (e) => {
-        dragging = true;
+        isDragging = true;
         startY = e.touches[0].clientY;
+        currentTranslate = 0;
       });
 
-      header.addEventListener("touchmove", (e) => {
-        currentY = e.touches[0].clientY;
-        move(currentY);
-      });
-
-      header.addEventListener("touchend", end);
+      header.addEventListener("touchmove", handleTouchMove);
+      header.addEventListener("touchend", handleTouchEnd);
     };
 
     if (document.readyState === "loading") {
