@@ -1,8 +1,10 @@
 /* =========================================================================
-   LOCATION-AWARE BANNER — Configurable Widget (Final)
+   LOCATION-AWARE BANNER — Time-Safe & Distance-Aware (FINAL)
    ========================================================================= */
 
 (function (global) {
+  const { DateTime } = luxon;
+
   let config = {
     size: "md",
     color: "#fff",
@@ -10,6 +12,7 @@
     bg: "transparent",
     fontFamily: "Inter, sans-serif",
     nearYouThreshold: 100,
+    bufferHours: 6, // matches events.js buffer
   };
 
   let banner;
@@ -85,14 +88,58 @@
     });
   }
 
+  /* ===================== CORE LOGIC ===================== */
+
   function handleEvents(e) {
     const events = e.detail?.events || [];
-    const nearby = events.filter(
+    const now = DateTime.utc();
+
+    // 1. Filter ONLY valid upcoming / ongoing events
+    const upcoming = events.filter((ev) => {
+      if (!ev.status || ev.status.toLowerCase() !== "live") return false;
+
+      const ts =
+        ev.utcTimestamp ||
+        ev.showtimes?.[0]?.utcTimestamp ||
+        null;
+
+      if (!ts && !ev.startDate) return false;
+
+      const start = ts
+        ? DateTime.fromISO(ts, { zone: "utc" })
+        : DateTime.fromISO(
+            `${ev.startDate}T${ev.startTime || "00:00"}`,
+            { zone: "utc" }
+          );
+
+      const end = ev.endDate
+        ? DateTime.fromISO(`${ev.endDate}T23:59:59`, { zone: "utc" })
+        : start;
+
+      return end.plus({ hours: config.bufferHours }) >= now;
+    });
+
+    // 2. Filter by distance
+    const nearby = upcoming.filter(
       (x) =>
-        typeof x.distance === "number" && x.distance <= config.nearYouThreshold
+        typeof x.distance === "number" &&
+        x.distance <= config.nearYouThreshold
     );
 
     if (!nearby.length) return noNearby();
+
+    // 3. Sort by soonest event
+    nearby.sort((a, b) => {
+      const aTime =
+        a.utcTimestamp ||
+        a.showtimes?.[0]?.utcTimestamp ||
+        `${a.startDate}T${a.startTime || "00:00"}Z`;
+      const bTime =
+        b.utcTimestamp ||
+        b.showtimes?.[0]?.utcTimestamp ||
+        `${b.startDate}T${b.startTime || "00:00"}Z`;
+      return new Date(aTime) - new Date(bTime);
+    });
 
     const { displayCity = "", displayState = "" } = nearby[0];
     const loc = displayState ? `${displayCity}, ${displayState}` : displayCity;
