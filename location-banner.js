@@ -1,10 +1,8 @@
 /* =========================================================================
-   LOCATION-AWARE BANNER — Time-Safe & Distance-Aware (FINAL)
+   LOCATION-AWARE BANNER — Production-Safe (NO LUXON)
    ========================================================================= */
 
 (function (global) {
-  const { DateTime } = luxon;
-
   let config = {
     size: "md",
     color: "#fff",
@@ -12,7 +10,7 @@
     bg: "transparent",
     fontFamily: "Inter, sans-serif",
     nearYouThreshold: 100,
-    bufferHours: 6, // matches events.js buffer
+    bufferHours: 6,
   };
 
   let banner;
@@ -92,9 +90,8 @@
 
   function handleEvents(e) {
     const events = e.detail?.events || [];
-    const now = DateTime.utc();
+    const now = Date.now();
 
-    // 1. Filter ONLY valid upcoming / ongoing events
     const upcoming = events.filter((ev) => {
       if (!ev.status || ev.status.toLowerCase() !== "live") return false;
 
@@ -103,23 +100,25 @@
         ev.showtimes?.[0]?.utcTimestamp ||
         null;
 
-      if (!ts && !ev.startDate) return false;
+      let startMs;
 
-      const start = ts
-        ? DateTime.fromISO(ts, { zone: "utc" })
-        : DateTime.fromISO(
-            `${ev.startDate}T${ev.startTime || "00:00"}`,
-            { zone: "utc" }
-          );
+      if (ts) {
+        startMs = Date.parse(ts);
+      } else if (ev.startDate) {
+        startMs = Date.parse(
+          `${ev.startDate}T${ev.startTime || "00:00"}Z`
+        );
+      } else {
+        return false;
+      }
 
-      const end = ev.endDate
-        ? DateTime.fromISO(`${ev.endDate}T23:59:59`, { zone: "utc" })
-        : start;
+      const endMs = ev.endDate
+        ? Date.parse(`${ev.endDate}T23:59:59Z`)
+        : startMs;
 
-      return end.plus({ hours: config.bufferHours }) >= now;
+      return endMs + config.bufferHours * 3600000 >= now;
     });
 
-    // 2. Filter by distance
     const nearby = upcoming.filter(
       (x) =>
         typeof x.distance === "number" &&
@@ -128,7 +127,6 @@
 
     if (!nearby.length) return noNearby();
 
-    // 3. Sort by soonest event
     nearby.sort((a, b) => {
       const aTime =
         a.utcTimestamp ||
@@ -138,7 +136,7 @@
         b.utcTimestamp ||
         b.showtimes?.[0]?.utcTimestamp ||
         `${b.startDate}T${b.startTime || "00:00"}Z`;
-      return new Date(aTime) - new Date(bTime);
+      return Date.parse(aTime) - Date.parse(bTime);
     });
 
     const { displayCity = "", displayState = "" } = nearby[0];
