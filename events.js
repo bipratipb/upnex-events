@@ -235,27 +235,90 @@
     container.innerHTML = html;
   }
 
+  /* ============================================================
+     UPDATED: Ticket Button Builder (Above Label Supported)
+     ============================================================ */
   function buildTicketButton({ ticketLink: t, venue, labelDate }) {
     const color = t.buttonColor || "#000";
     const text = t.buttonText || "";
 
+    // NEW: Above-button label support
+    const aboveText = t.aboveButtonText || "";
+    const aboveColor = t.aboveButtonTextColor || "#B40000";
+
+    const aboveLabelHTML = aboveText
+      ? `<div class="ticket-above-label" style="color:${aboveColor}">
+           ${aboveText}
+         </div>`
+      : "";
+
+    const wrapStart = `<div class="ticket-button-wrapper">`;
+    const wrapEnd = `</div>`;
+
+    /* ---------- WAITLIST POPUP ---------- */
     if (t.linkType === "Join Waitlist" && t.ticketLink === "popup") {
-      return `<a href="javascript:void(0)" class="tickets-info"
-        style="background-color:${color}"
-        onclick="joinWaitlistForm('${esc(venue)}','${esc(labelDate)}')">${text}</a>`;
+      return `
+        ${wrapStart}
+          ${aboveLabelHTML}
+          <a href="javascript:void(0)" class="tickets-info"
+            style="background-color:${color}"
+            onclick="joinWaitlistForm('${esc(venue)}','${esc(labelDate)}')">
+            ${text}
+          </a>
+        ${wrapEnd}
+      `;
     }
 
+    /* ---------- SOLD OUT POPUP ---------- */
     if (t.linkType === "Sold Out" && t.ticketLink === "popup") {
-      return `<a href="javascript:void(0)" class="tickets-info tickets-info-soldout"
-        style="background-color:${color}"
-        onclick="openSoldOutForm('${esc(venue)}','${esc(labelDate)}')">${text}</a>`;
+      return `
+        ${wrapStart}
+          ${aboveLabelHTML}
+          <a href="javascript:void(0)" class="tickets-info tickets-info-soldout"
+            style="background-color:${color}"
+            onclick="openSoldOutForm('${esc(venue)}','${esc(labelDate)}')">
+            ${text}
+          </a>
+        ${wrapEnd}
+      `;
     }
 
-    return `<a href="${t.ticketLink}" class="tickets-info"
-      style="background-color:${color}"
-      target="_blank" rel="noopener noreferrer">${text}</a>`;
+    /* ---------- NORMAL LINK ---------- */
+    return `
+      ${wrapStart}
+        ${aboveLabelHTML}
+        <a href="${t.ticketLink}" class="tickets-info"
+          style="background-color:${color}"
+          target="_blank" rel="noopener noreferrer">
+          ${text}
+        </a>
+      ${wrapEnd}
+    `;
   }
 
+  /* ===================== LABEL CSS (GLOBAL) ===================== */
+  const style = document.createElement("style");
+  style.textContent = `
+    .ticket-button-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: stretch;
+    }
+
+    .ticket-above-label {
+      font-family: var(--contentfont);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-align: center;
+      line-height: 1.2;
+    }
+  `;
+  document.head.appendChild(style);
+
+  /* ===================== BOTTOM SHEET CLOSE ===================== */
   function closeBottomSheet() {
     const overlay = document.getElementById("waitlistOverlay");
     const sheet = document.getElementById("waitlistBottomSheet");
@@ -264,8 +327,7 @@
     overlay.classList.remove("active");
     sheet.classList.remove("active");
     document.body.style.overflow = "";
-    
-    // Reset any transforms
+
     sheet.style.transform = "";
     overlay.style.opacity = "";
   }
@@ -280,7 +342,8 @@
       `https://api.leadconnectorhq.com/widget/form/${config.waitlistFormId}`
     );
 
-    if (venue || date) url.searchParams.set("waitlist", `${venue} ${date}`.trim());
+    if (venue || date)
+      url.searchParams.set("waitlist", `${venue} ${date}`.trim());
 
     if (
       typeof userLocationGlobal.lat === "number" &&
@@ -295,20 +358,14 @@
     sheet.classList.add("active");
     document.body.style.overflow = "hidden";
 
-    // Setup click outside to close
     setTimeout(() => {
-      overlay.onclick = function(e) {
-        if (e.target === overlay) {
-          closeBottomSheet();
-        }
+      overlay.onclick = function (e) {
+        if (e.target === overlay) closeBottomSheet();
       };
     }, 100);
 
-    // Setup close button
     const closeBtn = sheet.querySelector(".waitlist-close-btn");
-    if (closeBtn) {
-      closeBtn.onclick = closeBottomSheet;
-    }
+    if (closeBtn) closeBtn.onclick = closeBottomSheet;
   };
 
   global.openSoldOutForm = function (venue = "", date = "") {
@@ -321,7 +378,8 @@
       `https://api.leadconnectorhq.com/widget/form/${config.soldOutFormId}`
     );
 
-    if (venue || date) url.searchParams.set("waitlist", `${venue} ${date}`.trim());
+    if (venue || date)
+      url.searchParams.set("waitlist", `${venue} ${date}`.trim());
 
     if (
       typeof userLocationGlobal.lat === "number" &&
@@ -336,20 +394,14 @@
     sheet.classList.add("active");
     document.body.style.overflow = "hidden";
 
-    // Setup click outside to close
     setTimeout(() => {
-      overlay.onclick = function(e) {
-        if (e.target === overlay) {
-          closeBottomSheet();
-        }
+      overlay.onclick = function (e) {
+        if (e.target === overlay) closeBottomSheet();
       };
     }, 100);
 
-    // Setup close button
     const closeBtn = sheet.querySelector(".waitlist-close-btn");
-    if (closeBtn) {
-      closeBtn.onclick = closeBottomSheet;
-    }
+    if (closeBtn) closeBtn.onclick = closeBottomSheet;
   };
 
   function formatRange(dates) {
@@ -362,12 +414,16 @@
 
   function fmtLong(d) {
     const [y, m, day] = d.split("-");
-    return `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m-1]} ${parseInt(day,10)}, ${y}`;
+    return `${
+      ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m - 1]
+    } ${parseInt(day, 10)}, ${y}`;
   }
 
   function fmtShort(d) {
     const [, m, day] = d.split("-");
-    return `${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m-1]} ${parseInt(day,10)}`;
+    return `${
+      ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m - 1]
+    } ${parseInt(day, 10)}`;
   }
 
   function calcDistance(lat1, lon1, lat2, lon2) {
@@ -399,11 +455,10 @@
         const deltaY = e.clientY - startY;
         if (deltaY > 0) {
           currentTranslate = deltaY;
-          if (window.innerWidth > 768) {
-            sheet.style.transform = `translateX(-50%) translateY(${deltaY}px)`;
-          } else {
-            sheet.style.transform = `translateY(${deltaY}px)`;
-          }
+          sheet.style.transform =
+            window.innerWidth > 768
+              ? `translateX(-50%) translateY(${deltaY}px)`
+              : `translateY(${deltaY}px)`;
           overlay.style.opacity = Math.max(0.3, 1 - deltaY / 400);
         }
       };
@@ -412,49 +467,19 @@
         if (!isDragging) return;
         isDragging = false;
 
-        // If dragged down more than 100px, close it
         if (currentTranslate > 100) {
           closeBottomSheet();
         } else {
-          // Snap back
-          sheet.style.transform = window.innerWidth > 768 ? "translateX(-50%) translateY(0)" : "translateY(0)";
+          sheet.style.transform =
+            window.innerWidth > 768
+              ? "translateX(-50%) translateY(0)"
+              : "translateY(0)";
           overlay.style.opacity = "1";
         }
 
         currentTranslate = 0;
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
-      };
-
-      const handleTouchMove = (e) => {
-        if (!isDragging) return;
-        const touch = e.touches[0];
-        const deltaY = touch.clientY - startY;
-        if (deltaY > 0) {
-          currentTranslate = deltaY;
-          if (window.innerWidth > 768) {
-            sheet.style.transform = `translateX(-50%) translateY(${deltaY}px)`;
-          } else {
-            sheet.style.transform = `translateY(${deltaY}px)`;
-          }
-          overlay.style.opacity = Math.max(0.3, 1 - deltaY / 400);
-        }
-      };
-
-      const handleTouchEnd = () => {
-        if (!isDragging) return;
-        isDragging = false;
-
-        // If dragged down more than 100px, close it
-        if (currentTranslate > 100) {
-          closeBottomSheet();
-        } else {
-          // Snap back
-          sheet.style.transform = window.innerWidth > 768 ? "translateX(-50%) translateY(0)" : "translateY(0)";
-          overlay.style.opacity = "1";
-        }
-
-        currentTranslate = 0;
       };
 
       header.addEventListener("mousedown", (e) => {
@@ -464,15 +489,6 @@
         document.addEventListener("mousemove", handleMouseMove);
         document.addEventListener("mouseup", handleMouseUp);
       });
-
-      header.addEventListener("touchstart", (e) => {
-        isDragging = true;
-        startY = e.touches[0].clientY;
-        currentTranslate = 0;
-      });
-
-      header.addEventListener("touchmove", handleTouchMove);
-      header.addEventListener("touchend", handleTouchEnd);
     };
 
     if (document.readyState === "loading") {
@@ -481,60 +497,45 @@
       init();
     }
   }
-  /* ===================== CLICK TRACKING ===================== */                                                                                                                    
-                                                                                                                                                                                      
-  (function() {                                                                                                                                                                       
-                                                                                                                                                                                      
-    var TRACK_URL = 'https://events-portal-sage.vercel.app/api/events/track-click';                                                                                                   
-                                                                                                                                                                                      
-                                                                                                                                                                                      
-    // Get all URL parameters                                                                                                                                                         
-    function getUrlParams() {                                                                                                                                                         
-      var params = {};                                                                                                                                                                
-      var search = new URLSearchParams(window.location.search);                                                                                                                       
-      search.forEach(function(v, k) { params[k] = v; });                                                                                                                              
-      return params;                                                                                                                                                                  
-    }                                                                                                                                                                                 
-                                                                                                                                                                                      
-    document.addEventListener('click', function(e) {                                                                                                                                  
-                                                                                                                                                                                      
-      var btn = e.target.closest('.tickets-info');                                                                                                                                    
-                                                                                                                                                                                      
-      if (!btn) return;                                                                                                                                                               
-                                                                                                                                                                                      
-                                                                                                                                                                                      
-                                                                                                                                                                                      
-      var card = btn.closest('.event-card');                                                                                                                                          
-                                                                                                                                                                                      
-      var eventId = card ? card.getAttribute('data-event-id') : null;                                                                                                                 
-                                                                                                                                                                                      
-      if (!eventId) return;                                                                                                                                                           
-                                                                                                                                                                                      
-                                                                                                                                                                                      
-                                                                                                                                                                                      
-      var payload = JSON.stringify({                                                                                                                                                  
-                                                                                                                                                                                      
-        event_id: eventId,                                                                                                                                                            
-                                                                                                                                                                                      
-        ticket_link_url: btn.href || '',                                                                                                                                              
-                                                                                                                                                                                      
-        referrer: document.referrer,                                                                                                                                                  
-        url_params: getUrlParams()                                                                                                                                                    
-      });                                                                                                                                                                             
-                                                                                                                                                                                      
-                                                                                                                                                                                      
-                                                                                                                                                                                      
-      if (navigator.sendBeacon) {                                                                                                                                                     
-                                                                                                                                                                                      
-        navigator.sendBeacon(TRACK_URL, payload);                                                                                                                                     
-                                                                                                                                                                                      
-      } else {                                                                                                                                                                        
-                                                                                                                                                                                      
-        fetch(TRACK_URL, { method: 'POST', body: payload, keepalive: true }).catch(function(){});                                                                                     
-                                                                                                                                                                                      
-      }                                                                                                                                                                               
-                                                                                                                                                                                      
-    });                                                                                                                                                                               
-                                                                                                                                                                                      
+
+  /* ===================== CLICK TRACKING ===================== */
+  (function () {
+    var TRACK_URL =
+      "https://events-portal-sage.vercel.app/api/events/track-click";
+
+    function getUrlParams() {
+      var params = {};
+      var search = new URLSearchParams(window.location.search);
+      search.forEach(function (v, k) {
+        params[k] = v;
+      });
+      return params;
+    }
+
+    document.addEventListener("click", function (e) {
+      var btn = e.target.closest(".tickets-info");
+      if (!btn) return;
+
+      var card = btn.closest(".event-card");
+      var eventId = card ? card.getAttribute("data-event-id") : null;
+      if (!eventId) return;
+
+      var payload = JSON.stringify({
+        event_id: eventId,
+        ticket_link_url: btn.href || "",
+        referrer: document.referrer,
+        url_params: getUrlParams(),
+      });
+
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(TRACK_URL, payload);
+      } else {
+        fetch(TRACK_URL, {
+          method: "POST",
+          body: payload,
+          keepalive: true,
+        }).catch(function () {});
+      }
+    });
   })();
 })(window);
