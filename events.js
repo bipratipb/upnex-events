@@ -217,7 +217,7 @@
         });
 
       html += `
-        <div class="event-card">
+        <div class="event-card" data-event-id="${ev.id}">
           <div class="event-info-column">
             <div class="date"><p>${
               end ? `${fmtShort(start)} - ${fmtLong(end)}` : fmtLong(start)
@@ -481,4 +481,60 @@
       init();
     }
   }
+  /* ===================== CLICK TRACKING ===================== */                                                                                                                    
+                                                                                                                                                                                      
+  (function() {                                                                                                                                                                       
+                                                                                                                                                                                      
+    var TRACK_URL = 'https://events-portal-sage.vercel.app/api/events/track-click';                                                                                                   
+                                                                                                                                                                                      
+                                                                                                                                                                                      
+    // Get all URL parameters                                                                                                                                                         
+    function getUrlParams() {                                                                                                                                                         
+      var params = {};                                                                                                                                                                
+      var search = new URLSearchParams(window.location.search);                                                                                                                       
+      search.forEach(function(v, k) { params[k] = v; });                                                                                                                              
+      return params;                                                                                                                                                                  
+    }                                                                                                                                                                                 
+                                                                                                                                                                                      
+    document.addEventListener('click', function(e) {                                                                                                                                  
+                                                                                                                                                                                      
+      var btn = e.target.closest('.tickets-info');                                                                                                                                    
+                                                                                                                                                                                      
+      if (!btn) return;                                                                                                                                                               
+                                                                                                                                                                                      
+                                                                                                                                                                                      
+                                                                                                                                                                                      
+      var card = btn.closest('.event-card');                                                                                                                                          
+                                                                                                                                                                                      
+      var eventId = card ? card.getAttribute('data-event-id') : null;                                                                                                                 
+                                                                                                                                                                                      
+      if (!eventId) return;                                                                                                                                                           
+                                                                                                                                                                                      
+                                                                                                                                                                                      
+                                                                                                                                                                                      
+      var payload = JSON.stringify({                                                                                                                                                  
+                                                                                                                                                                                      
+        event_id: eventId,                                                                                                                                                            
+                                                                                                                                                                                      
+        ticket_link_url: btn.href || '',                                                                                                                                              
+                                                                                                                                                                                      
+        referrer: document.referrer,                                                                                                                                                  
+        url_params: getUrlParams()                                                                                                                                                    
+      });                                                                                                                                                                             
+                                                                                                                                                                                      
+                                                                                                                                                                                      
+                                                                                                                                                                                      
+      if (navigator.sendBeacon) {                                                                                                                                                     
+                                                                                                                                                                                      
+        navigator.sendBeacon(TRACK_URL, payload);                                                                                                                                     
+                                                                                                                                                                                      
+      } else {                                                                                                                                                                        
+                                                                                                                                                                                      
+        fetch(TRACK_URL, { method: 'POST', body: payload, keepalive: true }).catch(function(){});                                                                                     
+                                                                                                                                                                                      
+      }                                                                                                                                                                               
+                                                                                                                                                                                      
+    });                                                                                                                                                                               
+                                                                                                                                                                                      
+  })();
 })(window);
