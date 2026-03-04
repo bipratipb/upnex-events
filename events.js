@@ -236,14 +236,17 @@
   }
 
   /* ============================================================
-     UPDATED: Ticket Button Builder (Above Label Supported)
+     UPDATED: Ticket Button Builder (Above Label for Waitlist/Sold Out Only)
      ============================================================ */
   function buildTicketButton({ ticketLink: t, venue, labelDate }) {
     const color = t.buttonColor || "#000";
     const text = t.buttonText || "";
 
-    // NEW: Above-button label support
-    const aboveText = t.aboveButtonText || "";
+    // Above-button label only for waitlist/sold out
+    const isWaitlistOrSoldOut =
+      t.linkType === "Join Waitlist" || t.linkType === "Sold Out";
+
+    const aboveText = isWaitlistOrSoldOut ? (t.aboveButtonText || "") : "";
     const aboveColor = t.aboveButtonTextColor || "#B40000";
 
     const aboveLabelHTML = aboveText
