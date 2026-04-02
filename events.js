@@ -50,7 +50,7 @@
   }
 
   async function fetchData() {
-    const url = `https://events-portal-sage.vercel.app/api/events/${config.locationId}`;
+    const url = `https://63f6-2600-6c5a-1f00-80-d0f4-d2ea-53a-b2fc.ngrok-free.app/api/events/${config.locationId}`;
     try {
       const r = await fetch(url, {
         headers: {
@@ -186,7 +186,7 @@
           ? `<span class="badge-near-you">NEAR YOU</span>`
           : "";
 
-      const venue = ev.displayVenue || "";
+      const venue = ev.hideVenueName ? "" : (ev.displayVenue || "");
       const city = ev.displayCity || "";
       const title = ev.additionalInfo || "";
       const start = ev.startDate || "";
@@ -224,7 +224,7 @@
             } ${nearBadge}</p></div>
             <div class="details"><h3>${city}</h3></div>
             <div class="details">
-              <p>${venue}</p>
+              ${venue ? `<p>${venue}</p>` : ""}
               ${title ? `<p class="event-title">${title}</p>` : ""}
             </div>
           </div>
