@@ -50,7 +50,7 @@
   }
 
   async function fetchData() {
-    const url = `https://events-portal-sage.vercel.app/api/events/${config.locationId}`;
+    const url = `https://upnex-staging.vercel.app/api/events/${config.locationId}`;
     try {
       const r = await fetch(url, {
         headers: {
@@ -504,7 +504,7 @@
   /* ===================== CLICK TRACKING ===================== */
   (function () {
     var TRACK_URL =
-      "https://events-portal-sage.vercel.app/api/events/track-click";
+      "https://upnex-staging.vercel.app/api/events/track-click";
 
     function getUrlParams() {
       var params = {};
