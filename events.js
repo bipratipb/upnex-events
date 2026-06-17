@@ -151,9 +151,9 @@
       const start = ts
         ? DateTime.fromISO(ts, { zone: "utc" })
         : DateTime.fromISO(
-            `${e.startDate}T${e.startTime || "00:00"}`,
-            { zone: "utc" }
-          );
+          `${e.startDate}T${e.startTime || "00:00"}`,
+          { zone: "utc" }
+        );
 
       const end = e.endDate
         ? DateTime.fromISO(`${e.endDate}T23:59:59`, { zone: "utc" })
@@ -219,9 +219,8 @@
       html += `
         <div class="event-card" data-event-id="${ev.id}">
           <div class="event-info-column">
-            <div class="date"><p>${
-              end ? `${fmtShort(start)} - ${fmtLong(end)}` : fmtLong(start)
-            } ${nearBadge}</p></div>
+            <div class="date"><p>${ev.hideEventDates ? "" : (end ? `${fmtShort(start)} - ${fmtLong(end)}` : fmtLong(start))
+        }${nearBadge ? ` ${nearBadge}` : ""}</p></div>
             <div class="details"><h3>${city}</h3></div>
             <div class="details">
               ${venue ? `<p>${venue}</p>` : ""}
@@ -417,16 +416,14 @@
 
   function fmtLong(d) {
     const [y, m, day] = d.split("-");
-    return `${
-      ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m - 1]
-    } ${parseInt(day, 10)}, ${y}`;
+    return `${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][m - 1]
+      } ${parseInt(day, 10)}, ${y}`;
   }
 
   function fmtShort(d) {
     const [, m, day] = d.split("-");
-    return `${
-      ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m - 1]
-    } ${parseInt(day, 10)}`;
+    return `${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][m - 1]
+      } ${parseInt(day, 10)}`;
   }
 
   function calcDistance(lat1, lon1, lat2, lon2) {
@@ -436,8 +433,8 @@
     const a =
       Math.sin(dLat / 2) ** 2 +
       Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) ** 2;
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
     return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
   }
 
@@ -537,7 +534,7 @@
           method: "POST",
           body: payload,
           keepalive: true,
-        }).catch(function () {});
+        }).catch(function () { });
       }
     });
   })();
