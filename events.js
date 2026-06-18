@@ -157,7 +157,9 @@
 
       const end = e.endDate
         ? DateTime.fromISO(`${e.endDate}T23:59:59`, { zone: "utc" })
-        : start;
+        : e.startDate
+          ? DateTime.fromISO(`${e.startDate}T23:59:59`, { zone: "utc" })
+          : start;
 
       return end.plus({ hours: buffer }) >= now;
     });
