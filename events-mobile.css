@@ -1,7 +1,10 @@
 /* =========================================================================
    EVENTS WIDGET — Mobile-First (card layout 1 + fonts from events.css)
    ========================================================================= */
-
+.event-card .badge-near-you {
+  top: -25px !important;
+  left: 0px !important;
+  }
 /* ---------- Root Container ---------- */
 .event-container,
 .AllShows,
