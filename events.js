@@ -278,9 +278,9 @@
       return `
         ${wrapStart}
           ${aboveLabelHTML}
-          <a href="javascript:void(0)" class="tickets-info tickets-info-soldout"
+                    <a href="#sold-out" class="tickets-info tickets-info-soldout"
             style="background-color:${color}"
-            onclick="openSoldOutForm('${esc(venue)}','${esc(labelDate)}')">
+            onclick="event.preventDefault(); openSoldOutForm('${esc(venue)}','${esc(labelDate)}')">
             ${text}
           </a>
         ${wrapEnd}
