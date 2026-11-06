@@ -264,9 +264,9 @@
       return `
         ${wrapStart}
           ${aboveLabelHTML}
-          <a href="javascript:void(0)" class="tickets-info"
+                    <a href="#join-waitlist" class="tickets-info"
             style="background-color:${color}"
-            onclick="joinWaitlistForm('${esc(venue)}','${esc(labelDate)}')">
+            onclick="event.preventDefault(); joinWaitlistForm('${esc(venue)}','${esc(labelDate)}')">
             ${text}
           </a>
         ${wrapEnd}
