@@ -234,7 +234,52 @@
     });
 
     container.innerHTML = html;
+    scheduleEqualizeTicketButtons();
   }
+
+  /* ===================== EQUAL-WIDTH TICKET BUTTONS ===================== */
+  function equalizeTicketButtons() {
+    var btns = document.querySelectorAll(".tickets-list .tickets-info");
+    if (!btns.length) return;
+    btns.forEach(function (b) { b.style.width = ""; });
+    var max = 0;
+    btns.forEach(function (b) {
+      max = Math.max(max, b.getBoundingClientRect().width);
+    });
+    if (!max) return; // container hidden / not laid out yet - leave natural widths
+    btns.forEach(function (b) {
+      b.style.boxSizing = "border-box"; // width includes padding, so it equals the widest button exactly
+      b.style.width = Math.ceil(max) + "px";
+      b.style.maxWidth = "100%";
+    });
+  }
+
+  var equalizeTimer;
+  function scheduleEqualizeTicketButtons() {
+    clearTimeout(equalizeTimer);
+    equalizeTimer = setTimeout(equalizeTicketButtons, 50);
+  }
+
+  window.addEventListener("load", scheduleEqualizeTicketButtons);
+  window.addEventListener("resize", scheduleEqualizeTicketButtons);
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(scheduleEqualizeTicketButtons);
+  }
+  (function observeEventsContainer() {
+    var start = function () {
+      var target = document.getElementById("all-events") || document.body;
+      if (!target) return;
+      new MutationObserver(scheduleEqualizeTicketButtons).observe(target, {
+        childList: true,
+        subtree: true,
+      });
+    };
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", start);
+    } else {
+      start();
+    }
+  })();
 
   /* ============================================================
      UPDATED: Ticket Button Builder (Above Label for Waitlist/Sold Out Only)
